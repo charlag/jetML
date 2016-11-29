@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title></title>
+    <style media="screen">
+      * {
+        margin: 0;
+        padding: 0;
+        text-decoration: none;
+      }
+
+      textarea {
+        width: 100%;
+        margin: 20px;
+        padding: 5px;
+      }
+    </style>
+  </head>
+  <body>
+    <textarea>
+    </textarea>
+    <button style="display: block; margin: 0 auto; width: 80px; height: 30px;">
+      Eval
+    </button>
+    <p style="width: 100%; margin: 20px;">
+    </P>
+  </body>
+  <script src="./peg.js" charset="utf-8"></script>
+  <script src="./eval.js" charset="utf-8"></script>
+  <script>
+    const textarea = document.querySelector('textarea');
+    const button = document.querySelector('button');
+    const p = document.querySelector('p');
+
+    button.onclick = () => {
+      p.innerHTML = parseAndEval(textarea.value);
+    };
+  </script>
+</html>
