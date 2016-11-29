@@ -1,5 +1,5 @@
 Expression
-  = '(' op: Operator _  arg1: Expression _ arg2: Expression ')' { return [op, arg1, arg2]; }
+  = op: Operator _  arg1: '(' Expression ')' _ '(' arg2: Expression ')' { return [op, arg1, arg2]; }
   / Integer
 
 _ "whitespace"
