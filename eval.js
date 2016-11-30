@@ -38,7 +38,7 @@ Letter
   = [a-zA-Z]
 
 Identifier
-  = (Letter (Letter / Integer / '-')*)
+  = (Letter / '+' / '-' / '*' / '/' / '_') { return text(); }
 `;
 
 // const parser = peg.generate(grammar);
