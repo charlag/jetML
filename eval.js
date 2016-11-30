@@ -59,7 +59,7 @@ ActualArguments
 
 
 Lambda
-  = '\\' args: Arguments _ '->'  _ body: Expression {
+  = '$' args: Arguments _ '->' _ body: Expression {
    return { type: 'lambda',
             args: args,
             body: body
@@ -67,21 +67,11 @@ Lambda
     }
 
 Arguments
-  = (Identifier (',' _ Identifier)*) { return text().split(", ") }
+  = head: Identifier rest: (',' _ Identifier)* { return [head].concat(rest); }
 `
 
 // const parser = peg.generate(grammar);
 const parser = peg.generate(grammar);
-
-const id = x => x;
-const selfApply = s => s(s);
-const apply = f => x => f(x);
-
-const selectFirst = first => second => first;
-
-const selectSecond = first => id;
-
-const makePair = first => second => func => func(first)(second);
 
 const std = {
   '+': {
@@ -111,18 +101,13 @@ const std = {
   }
 }
 
-const applyArguments = (args, actualArgs, env) => {
-  const envCopy = Object.assign({}, parentEnv);
-  args.forEach((el, i) => {
-    env[el] = actualArgs[i];
-  });
-  return env;
-}
-
-const makeLambda = (args, body, parentEnv) => {
-  return () => {
-    const env = applyArguments(args, actualArgs, parentEnv);
-    return _eval(body, env);
+const makeLambda = (fun, parentEnv) => {
+  return (...args) => {
+      const env = Object.assign({}, parentEnv);
+      fun.args.forEach((el, i) => {
+        env[el] = args[i];
+      });
+      return _eval(fun.body, env);
   }
 }
 
@@ -144,14 +129,14 @@ const _eval = (expr, parentEnv = std) => {
     case 'application':
       const fun = _eval(expr.fun);
       const args = expr.args.map(arg => _eval(arg, env));
-      return fun.body.apply(null, args);
+      return fun.apply(null, args);
       break;
     case 'literal':
       return evalLiteral(expr);
     case 'identifier':
       return env[expr.value];
     case 'lambda':
-      return makeLambda(expr.args, expr.body, env);
+      return makeLambda(expr, env);
   }
 }
 
