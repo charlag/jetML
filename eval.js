@@ -5,6 +5,7 @@ const grammar =
 Expression "expression"
   = Application
   / Lambda
+  / Binding
   / Integer
   / String
   / Identifier
@@ -57,7 +58,6 @@ Application
 ActualArguments
  = expr: Expression rest: (',' _ e: Expression { return e })* { return [expr].concat(rest); }
 
-
 Lambda
   = '\\\\' args: Arguments _ '->' _ body: Expression {
    return { type: 'lambda',
@@ -67,7 +67,17 @@ Lambda
     }
 
 Arguments
-  = head: Identifier rest: (',' _ Identifier)* { return [head].concat(rest); }
+  = head: Identifier rest: (',' _ i: Identifier { return i; })* { return [head].concat(rest); }
+
+Binding
+ = name: Identifier _ '=' _ def: Expression _ 'in' _ expr: Expression {
+   return {
+     type: 'binding',
+     name: name,
+     def: def,
+     expr: expr
+   }
+ }
 `
 
 // const parser = peg.generate(grammar);
@@ -107,7 +117,7 @@ const _eval = (expr, parentEnv = std) => {
   const env = Object.assign({}, parentEnv);
   switch (expr.type) {
     case 'application':
-      const fun = _eval(expr.fun);
+      const fun = _eval(expr.fun, env);
       const args = expr.args.map(arg => _eval(arg, env));
       return fun.apply(null, args);
       break;
@@ -117,6 +127,9 @@ const _eval = (expr, parentEnv = std) => {
       return env[expr.value];
     case 'lambda':
       return makeLambda(expr, env);
+    case 'binding':
+      env[expr.name.value] = _eval(expr.def, env);
+      return _eval(expr.expr, env);
   }
 }
 
@@ -125,6 +138,10 @@ const parseAndEval = (str) => {
     const parsed = parser.parse(str);
     console.log(parsed);
     return _eval(parsed);
+  } catch (e if e instanceof SyntaxError) {
+    return e.toString() +
+      " start: " + JSON.stringify(e.location.start) +
+      " end: " + JSON.stringify(e.location.end);
   } catch (e) {
     return e.toString();
   }
