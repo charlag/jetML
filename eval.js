@@ -59,7 +59,7 @@ ActualArguments
 
 
 Lambda
-  = '$' args: Arguments _ '->' _ body: Expression {
+  = '\\\\' args: Arguments _ '->' _ body: Expression {
    return { type: 'lambda',
             args: args,
             body: body
