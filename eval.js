@@ -3,7 +3,8 @@
 const grammar =
 `
 Expression "expression"
-  = Application
+  = Condition
+  / Application
   / Lambda
   / Binding
   / Integer
@@ -23,7 +24,7 @@ Integer "integer"
   }
 
 String "string"
- = '\"' value: [^\"]* '\"' {
+ = '\"' value: ([^\"]* { return text(); } ) '\"' {
    return { type: 'literal',
             literalType: 'String',
             value: value
@@ -34,7 +35,7 @@ Letter
   = [a-zA-Z]
 
 Identifier
-  = (Letter / '+' / '-' / '*' / '/' / '_')+ {
+  = (Letter / '+' / '-' / '*' / '/' / '_' / '==' / '>' / '<')+ {
   	return {
     	type: 'identifier',
         value: text()
@@ -78,6 +79,16 @@ Binding
      expr: expr
    }
  }
+
+Condition
+ = 'if' _ '(' _ cond: Expression _ ')' _ '{' _ expr1: Expression _ '}' expr2: ( _ 'else' _ '{' _ e: Expression _ '}' { return e; })? {
+   return {
+     type: 'condition',
+     condition: cond,
+     expr1,
+     expr2
+   }
+ }
 `
 
 // const parser = peg.generate(grammar);
@@ -88,7 +99,14 @@ const std = {
   '-': (arg1, arg2) => arg1 - arg2,
   '*': (arg1, arg2) => arg1 * arg2,
   '/': (arg1, arg2) => arg1 / arg2,
-  'str': (arg1, arg2) => [arg1, arg2].join("")
+  'str': (arg1, arg2) => [arg1, arg2].join(""),
+  '>': (arg1, arg2) => arg1 > arg2,
+  '<': (arg1, arg2) => arg1 < arg2,
+  '==': (arg1, arg2) => arg1 === arg2,
+  'false': false,
+  'true': true,
+  'and': (arg1, arg2) => arg1 && arg2,
+  'or': (arg1, arg2) => arg1 || arg2
 }
 
 const makeLambda = (fun, parentEnv) => {
@@ -130,6 +148,12 @@ const _eval = (expr, parentEnv = std) => {
     case 'binding':
       env[expr.name.value] = _eval(expr.def, env);
       return _eval(expr.expr, env);
+    case 'condition':
+      if (_eval(expr.condition, env)) {
+        return _eval(expr.expr1, env);
+      } else {
+        return _eval(expr.expr2, env);
+      }
   }
 }
 
@@ -138,11 +162,13 @@ const parseAndEval = (str) => {
     const parsed = parser.parse(str);
     console.log(parsed);
     return _eval(parsed);
-  } catch (e if e instanceof SyntaxError) {
+  } catch (e) {
+    if (e.name == "SyntaxError" ) {
     return e.toString() +
       " start: " + JSON.stringify(e.location.start) +
       " end: " + JSON.stringify(e.location.end);
-  } catch (e) {
-    return e.toString();
+    } else {
+      return e.toString();
+    }
   }
 }
