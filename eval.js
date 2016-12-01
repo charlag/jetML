@@ -74,38 +74,18 @@ Arguments
 const parser = peg.generate(grammar);
 
 const std = {
-  '+': {
-    type: 'lambda',
-    args: ["arg1", "arg2"],
-    body: (arg1, arg2) => arg1 + arg2
-  },
-  '-': {
-    type: 'lambda',
-    args: ["arg1", "arg2"],
-    body: (arg1, arg2) => arg1 - arg2
-  },
-  '*': {
-    type: 'lambda',
-    args: ["arg1", "arg2"],
-    body: (arg1, arg2) => arg1 * arg2
-  },
-  '/': {
-    type: 'lambda',
-    args: ["arg1", "arg2"],
-    body: (arg1, arg2) => arg1 / arg2
-  },
-  'str': {
-    type: 'lambda',
-    args: ["arg1", "arg2"],
-    body: (arg1, arg2) => [arg1, arg2].join("")
-  }
+  '+': (arg1, arg2) => arg1 + arg2,
+  '-': (arg1, arg2) => arg1 - arg2,
+  '*': (arg1, arg2) => arg1 * arg2,
+  '/': (arg1, arg2) => arg1 / arg2,
+  'str': (arg1, arg2) => [arg1, arg2].join("")
 }
 
 const makeLambda = (fun, parentEnv) => {
   return (...args) => {
       const env = Object.assign({}, parentEnv);
       fun.args.forEach((el, i) => {
-        env[el] = args[i];
+        env[el.value] = args[i];
       });
       return _eval(fun.body, env);
   }
