@@ -144,7 +144,7 @@ const _eval = (expr, parentEnv = std) => {
     case 'identifier':
       return env[expr.value];
     case 'lambda':
-      return makeLambda(expr, env);
+      return makeLambda(expr, parentEnv);
     case 'binding':
       env[expr.name.value] = _eval(expr.def, env);
       return _eval(expr.expr, env);
